@@ -20,7 +20,11 @@ then, you'll need to call the **getLatestMoonDescriptor()** function, to ask Git
 
 It takes 4 parameters:
 
-* The **Base URL**, which must match the following pattern: **https:<span></span>//github.com/GITHUB_USER/GITHUB_REPO/releases/latest**; otherwise, the function will **throw** an error message
+* The **Base URL**, which must match the following pattern:
+
+  > https:<span></span>//github.com/GITHUB_USER/GITHUB_REPO/releases/latest
+
+  otherwise, the function will **throw** an error message
 
 * The **Descriptor file name** (most often, *App.moondeploy*) - that is, the filename of the descriptor uploaded to GitHub's *Releases* area
 
@@ -33,7 +37,7 @@ Please, note: if GitHub's API returned a result, *but* the descriptor file name 
 
 ## Example
 
-Please, refer to the [example HTML page](text.htm) and the [related script](test.js).
+Please, refer to the [example HTML page](test.htm) and the [related script](test.js).
 
 
 ## Further references
