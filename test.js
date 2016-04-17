@@ -32,4 +32,21 @@ window.onload=function() {
       alert("Error: " + apiRequest.status)
     }
   )
+
+
+  getLatestReleaseArtifact(
+    "https://github.com/giancosta86/GraphsJ/releases/latest",
+
+    "GraphsJ",
+
+    ".zip",
+
+    function(fileURL) {
+      document.getElementById("graphsJZipFile").innerHTML = fileURL
+    },
+
+    function(apiRequest) {
+      alert("Error: " + apiRequest.status)
+    }
+  )
 }

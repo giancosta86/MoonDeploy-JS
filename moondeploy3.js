@@ -18,44 +18,74 @@
   ===========================================================================
 */
 
-var githubLatestRegex = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/latest\/?$/
-
 function getLatestMoonDescriptor(baseURL, descriptorFileName, successCallback, errorCallback) {
-  var githubLatestComponents = githubLatestRegex.exec(baseURL)
+  if (!descriptorFileName.endsWith(".moondeploy")) {
+    throw "The descriptor file name must end with '.moondeploy'"
+  }
 
-  if (githubLatestComponents) {
-    var gitHubUser = githubLatestComponents[1]
-    var gitHubRepo = githubLatestComponents[2]
+  getLatestReleaseArtifact(baseURL, descriptorFileName, "", successCallback, errorCallback)
+}
 
-    var apiRequest = new XMLHttpRequest()
 
-    apiRequest.onreadystatechange = function() {
-      if (apiRequest.readyState == 4) {
-        if (apiRequest.status == 200) {
-          var responseObject = JSON.parse(apiRequest.responseText)
+function getLatestReleaseArtifact(baseURL, fileNamePrefix, fileNameSuffix, successCallback, errorCallback) {
+  scanAssetsInGitHubLatestRelease(
+    baseURL,
 
-          for (asset of responseObject.assets) {
-            if (asset.name == descriptorFileName) {
-              successCallback(asset.browser_download_url)
-              return
-            }
+    function(responseObject, asset) {
+      if (asset.name.startsWith(fileNamePrefix) && asset.name.endsWith(fileNameSuffix)) {
+        successCallback(asset.browser_download_url)
+        return true
+      }
+
+      return false
+    },
+
+
+    function(responseObject) {
+      throw `Cannot find latest release artifact filename starting with '${fileNamePrefix}' and ending with '${fileNameSuffix}' at '${responseObject.html_url}'`
+    },
+
+    errorCallback
+  )
+}
+
+
+function scanAssetsInGitHubLatestRelease(baseURL, assetFunction, allAssetsScannedFunction, errorCallback) {
+  var githubLatestReleaseRegex = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/latest\/?$/
+
+  var githubLatestComponents = githubLatestReleaseRegex.exec(baseURL)
+
+  if (!githubLatestComponents) {
+    throw("The base URL must be a valid GitHub URL ending with /releases/latest")
+  }
+
+  var gitHubUser = githubLatestComponents[1]
+  var gitHubRepo = githubLatestComponents[2]
+
+  var apiRequest = new XMLHttpRequest()
+
+  apiRequest.onreadystatechange = function() {
+    if (apiRequest.readyState == 4) {
+      if (apiRequest.status == 200) {
+        var responseObject = JSON.parse(apiRequest.responseText)
+
+        for (asset of responseObject.assets) {
+          if (assetFunction(responseObject, asset)) {
+            return
           }
+        }
 
-          throw `Cannot find descriptor '${descriptorFileName}' at ${responseObject.html_url}`
-        } else {
-          if (errorCallback) {
-            errorCallback(apiRequest)
-          }
+        allAssetsScannedFunction(responseObject)
+      } else {
+        if (errorCallback) {
+          errorCallback(apiRequest)
         }
       }
     }
-
-
-    var apiURL = "https://api.github.com/repos/" + gitHubUser + "/" + gitHubRepo + "/releases/latest"
-
-    apiRequest.open("GET", apiURL, true)
-    apiRequest.send()
-  } else {
-      throw("The baseURL parameter must be a GitHub URL ending with /releases/latest")
   }
+
+  var apiURL = "https://api.github.com/repos/" + gitHubUser + "/" + gitHubRepo + "/releases/latest"
+
+  apiRequest.open("GET", apiURL, true)
+  apiRequest.send()
 }
